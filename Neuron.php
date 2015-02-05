@@ -16,11 +16,21 @@ class Neuron extends GeneralNeuron
         $maxX = imagesx($image);
         $maxY = imagesy($image);
 
-        $array = array(array());
+        if($learn)
+            $array = $this->memory;
+        else
+            $array = array(array());
 
         for($y = 0;$y < $maxY;$y++){
             for($x = 0;$x < $maxX;$x++){
-                $array[$y][$x] = $this->blackOrWhite(imagecolorsforindex($image,imagecolorat ($image , $x, $y)));
+                if($learn){
+                    $black = $this->blackOrWhite(imagecolorsforindex($image,imagecolorat ($image , $x, $y)));
+                    if(($black == 0 && !$array[$y][$x] == 1) || $black == 1)
+                        $array[$y][$x] = $black;
+
+                }else
+                    $array[$y][$x] = $this->blackOrWhite(imagecolorsforindex($image,imagecolorat ($image , $x, $y)));
+                //$array[$y][$x] = $array[$y][$x] + $this->blackOrWhite(imagecolorsforindex($image,imagecolorat ($image , $x, $y)));
             }
         }
         imagedestroy($image);
@@ -34,9 +44,9 @@ class Neuron extends GeneralNeuron
 
     protected function blackOrWhite($arrayColor){
         if($arrayColor['red'] >= 150 && $arrayColor['green'] >= 150 && $arrayColor['blue'] >= 150)
-            return '1';
+            return '0'; // white
         else
-            return '0';
+            return '1';
     }
 
     public function printImage($memory = false){
@@ -66,5 +76,7 @@ class Neuron extends GeneralNeuron
         if($this->output > $this->minOutput)
             echo $this->name;
     }
+
+
 
 }
