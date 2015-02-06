@@ -12,7 +12,7 @@ class Neuron extends GeneralNeuron
     public $output   = 0;
 
     public function readImage($pathToImg,$learn = false){
-        $image = imagecreatefromjpeg($pathToImg);
+        $image = imagecreatefrompng($pathToImg);
         $maxX = imagesx($image);
         $maxY = imagesy($image);
 
@@ -23,14 +23,14 @@ class Neuron extends GeneralNeuron
 
         for($y = 0;$y < $maxY;$y++){
             for($x = 0;$x < $maxX;$x++){
-                if($learn){
+                /*if($learn){
                     $black = $this->blackOrWhite(imagecolorsforindex($image,imagecolorat ($image , $x, $y)));
                     if(($black == 0 && !$array[$y][$x] == 1) || $black == 1)
                         $array[$y][$x] = $black;
 
                 }else
-                    $array[$y][$x] = $this->blackOrWhite(imagecolorsforindex($image,imagecolorat ($image , $x, $y)));
-                //$array[$y][$x] = $array[$y][$x] + $this->blackOrWhite(imagecolorsforindex($image,imagecolorat ($image , $x, $y)));
+                    $array[$y][$x] = $this->blackOrWhite(imagecolorsforindex($image,imagecolorat ($image , $x, $y)));*/
+                $array[$y][$x] = $array[$y][$x] + $this->blackOrWhite(imagecolorsforindex($image,imagecolorat ($image , $x, $y)));
             }
         }
         imagedestroy($image);
