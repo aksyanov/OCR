@@ -1,15 +1,29 @@
 <?php
-class GeneralNeuron
-{
-    public $minOutput = 1800;
-}
-
-class Neuron extends GeneralNeuron
+class Neuron
 {
     public $name;
-    public $arrayOCR = array(array());
-    public $memory   = array(array());
-    public $output   = 0;
+    public $input    = array(array());  //входной массив изображения
+    public $memory   = array(array());  //память, веса синапсисов
+    public $inputMul = array(array());  //отмасштабированный input
+    public $limit    = 9;               // лимит, ниже которой буква не верна
+    public $inputSum = 0;               // сумма весов синапсисов
+
+    public function __construct(){
+        //в дальнешем загрузить память
+        $this->memory = array(array());
+    }
+
+    public function mul(){
+
+    }
+
+    public function sum(){
+
+    }
+
+    public function isNeuron(){
+
+    }
 
     public function readImage($pathToImg,$learn = false){
         $image = imagecreatefrompng($pathToImg);
