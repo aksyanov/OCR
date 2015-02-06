@@ -1,6 +1,6 @@
 <?php
 require_once('Neuron.php');
-require_once('OCR.php');
+require_once('ImageHelper.php');
 
 function OCR($arrayOfNeurons,$arrayOfImage){
 
@@ -147,10 +147,9 @@ $dest = imagecreatetruecolor($width,$height);
 echo imagecopyresized($dest, $image, 0, 0, 0, 0, $width, $height, $w_src, $w_src);*/
 
 
-$neuronA = new Neuron();
-$neuronA->name = '1';
-$neuronA->readImage('numbers/1.png',true);
-$neuronA->printImage(true);
+$image = new ImageHelper('images/3x7/2.png');
+$image->printArray();
+
 
 
 

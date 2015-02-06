@@ -6,21 +6,25 @@
  * Time: 20:19
  */
 
-class cOCR {
+class ImageHelper {
     protected $srcImage=false;  //  дескриптор созданного изображения
     protected $coordinate=4; // 1-верхний, левый, 2-правый, верхний, 3-нижний, правый...
     protected $coord=array();
     protected $namefile='000.png';
     protected $tmp='000.png';
     public $image_type=3;
+    public $array = array(array());
 
 // Передаем дефолтное название картинки, если оно в дальнейшем не будет указано и тип создаваемого изображения
-    function __construct($tmp='000.png',$image_type=3,$namefile='000.png') {
+    function __construct($loadSrc = '',$tmp='000.png',$image_type=3,$namefile='000.png') {
         $this->image_type=$image_type;
         $this->namefile=$namefile;
         $this->tmp=$tmp;
-    }
 
+        if(!$loadSrc == ''){
+            $this->load($loadSrc);
+        }
+    }
 
 // Произвести принудительную замену типа изображения? доступные значение:
 // 1=GIF ; 2=JPEG; 3=PNG
@@ -30,7 +34,6 @@ class cOCR {
             $this->image_type=$type;
         }
     }
-
 
 // Метод для получения dst_x и dst_y  функции  imagecopy
     protected function coordinat($srcWidth, $srcHeight, $logoWidth, $logoHeight){
@@ -67,10 +70,12 @@ class cOCR {
 
 // загрузка изображения из файла  аргумент
 // $img от куда читаем
-    public function load($img){
+    public function load($img,$createArray = true){
         $this->namefile=$img;
         if($this->imagecreatefrom($this->namefile)!=false){
             $this->srcImage = $this->imagecreatefrom($this->namefile);
+            if($createArray)
+                $this->getArray();
         } else {
             return false;
         }
@@ -89,7 +94,6 @@ class cOCR {
             ImagePNG($this->srcImage);
         }
     }
-
 
 // Получаем расширение файла, метод необходим для автоматическом добавлении расширения файла используемом в методе save()
     public function extension(){
@@ -272,6 +276,42 @@ class cOCR {
             }
         } else {
             return false;
+        }
+    }
+
+    //AKSYANOV
+    public function getArray(){
+        $w_src = ImageSX($this->srcImage);
+        $h_src = ImageSY($this->srcImage);
+
+        $maxX = $w_src;
+        $maxY = $h_src;
+
+        $array = array(array());
+
+        for($y = 0;$y < $maxY;$y++){
+            for($x = 0;$x < $maxX;$x++){
+                $array[$y][$x] = $this->isBlack(imagecolorsforindex($this->srcImage,imagecolorat ($this->srcImage , $x, $y)));
+            }
+        }
+
+        $this->array = $array;
+    }
+
+    protected function isBlack($arrayColor){
+        if($arrayColor['red'] >= 150 && $arrayColor['green'] >= 150 && $arrayColor['blue'] >= 150)
+            return '0'; // white
+        else
+            return '1';
+    }
+
+    public function printArray($memory = false){
+        $array = $this->array;
+        for($y = 0;$y < count($array);$y++){
+            for($x = 0;$x < count($array[$y]);$x++){
+                echo $array[$y][$x];
+            }
+            echo '<br>';
         }
     }
 } 
