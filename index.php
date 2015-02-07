@@ -15,7 +15,8 @@ $n9 = new Neuron('9');
 
 $neuronsLayer = array($n0,$n1,$n2,$n3,$n4,$n5,$n6,$n7,$n8,$n9);
 
-$dir = 'images/3x5/';
+//$dir = 'images/3x5/';
+$dir = 'images/bibi/';
 
 foreach($neuronsLayer as $neuron){
     if(isset($_GET['learn'])){
@@ -80,7 +81,8 @@ foreach($neuronsLayer as $neuron){
 
 //Подкинем пару файлов
 $ext = '.png';
-$image1 = new ImageHelper($dir.'1'.$ext);
+
+/*$image1 = new ImageHelper($dir.'1'.$ext);
 $image5 = new ImageHelper($dir.'5'.$ext);
 $image5c = new ImageHelper($dir.'5c'.$ext);
 $image6 = new ImageHelper($dir.'6'.$ext);
@@ -93,7 +95,7 @@ foreach($imageArray as $image){
         if($neuron->OCR($image->array))
             echo $neuron->name;
     }
-}
+}*/
 
 
 ?>

@@ -2,16 +2,20 @@
 class Neuron
 {
     public $name;
+    public $height;
+    public $width;
     public $input    = array(array());  //входной массив изображения
     public $memory   = array(array());  //память, веса синапсисов
     public $inputMul = array(array());  //отмасштабированный input
     public $limit    = 9;               // лимит, ниже которой буква не верна
     public $inputSum = 0;               // сумма весов синапсисов
-    public $memoryFolder    = 'memory/';
+    public $memoryFolder    = 'memory/bibi/';
     public $memoryExt       = '.txt';
 
-    public function __construct($name){
-        $this->name = $name;
+    public function __construct($name,$height = 40,$width = 23){
+        $this->name     = $name;
+        $this->height   = $height;
+        $this->width    = $width;
         $this->loadInMemory();
     }
 
@@ -53,7 +57,13 @@ class Neuron
             $this->memory = $array;
         }else{
             $stream = fopen($filename,'w');
-            $string = "0 0 0\r\n0 0 0\r\n0 0 0\r\n0 0 0\r\n0 0 0";
+            $string = "";
+            for($y = 0;$y < $this->height;$y++){
+                for($x = 0;$x < $this->width;$x++){
+                    $string.= '0 ';
+                }
+                $string.="\r\n";
+            }
             fwrite($stream,$string);
         }
     }

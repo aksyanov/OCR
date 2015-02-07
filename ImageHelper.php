@@ -299,7 +299,7 @@ class ImageHelper {
     }
 
     protected function isBlack($arrayColor){
-        if($arrayColor['red'] >= 150 && $arrayColor['green'] >= 150 && $arrayColor['blue'] >= 150)
+        if($arrayColor['red'] >= 50 && $arrayColor['green'] >= 50 && $arrayColor['blue'] >= 50)
             return '0'; // white
         else
             return '1';
