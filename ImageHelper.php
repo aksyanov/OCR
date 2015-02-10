@@ -7,22 +7,24 @@
  */
 
 class ImageHelper {
-    protected $srcImage=false;  //  дескриптор созданного изображения
+    public  $srcImage=false;  //  дескриптор созданного изображения
     protected $coordinate=4; // 1-верхний, левый, 2-правый, верхний, 3-нижний, правый...
     protected $coord=array();
     protected $namefile='000.png';
     protected $tmp='000.png';
+    public $name;
     public $image_type=3;
     public $array = array(array());
+    public $symbols = array(array());
 
 // Передаем дефолтное название картинки, если оно в дальнейшем не будет указано и тип создаваемого изображения
-    function __construct($loadSrc = '',$tmp='000.png',$image_type=3,$namefile='000.png') {
+    function __construct($loadSrc = '',$getArray = true,$tmp='000.png',$image_type=3,$namefile='000.png') {
         $this->image_type=$image_type;
         $this->namefile=$namefile;
         $this->tmp=$tmp;
 
         if(!$loadSrc == ''){
-            $this->load($loadSrc);
+            $this->load($loadSrc,$getArray);
         }
     }
 
@@ -107,15 +109,20 @@ class ImageHelper {
     }
 
 // Сохранение изображения в файл  аргумент $namefile - куда сохранять
-    public function save($namefile=false,$type=false){
+    public function save($namefile=false,$type=false,$cropImage = false){
+        if($cropImage)
+            $image = $this->cropImage;
+        else
+            $image = $this->srcImage;
+
         $this_namefile=$namefile?$namefile:$this->namefile;
         $type==1?$this_namefile.'.'.$this->extension():$this_namefile;
         if($this->image_type==2) {
-            ImageJPEG($this->srcImage, $this_namefile, 100);
+            ImageJPEG($image, $this_namefile, 100);
         } elseif($this->image_type==1 ) {
-            ImageGIF($this->srcImage, $this_namefile);
+            ImageGIF($image, $this_namefile);
         } else {
-            ImagePNG($this->srcImage, $this_namefile);
+            ImagePNG($image, $this_namefile);
         }
     }
 
@@ -188,6 +195,14 @@ class ImageHelper {
             unset($dest);
 
         }
+    }
+
+    public function crop($src_x, $src_y, $dest_width, $dest_height, $src_w, $src_h){
+
+            $dest = imagecreatetruecolor($dest_width,$dest_height);
+            imagecopyresized($dest, $this->srcImage, 0, 0, $src_x, $src_y, $dest_width, $dest_height, $src_w, $src_h);
+            return $dest;
+
     }
 
 // освобождает память, ассоциированную с изображением
@@ -280,9 +295,12 @@ class ImageHelper {
     }
 
     //AKSYANOV
-    public function getArray(){
-        $w_src = ImageSX($this->srcImage);
-        $h_src = ImageSY($this->srcImage);
+    public function getArray($image = null,$returnArray = false){
+        if($image == null)
+            $image = $this->srcImage;
+
+        $w_src = ImageSX($image);
+        $h_src = ImageSY($image);
 
         $maxX = $w_src;
         $maxY = $h_src;
@@ -291,27 +309,203 @@ class ImageHelper {
 
         for($y = 0;$y < $maxY;$y++){
             for($x = 0;$x < $maxX;$x++){
-                $array[$y][$x] = $this->isBlack(imagecolorsforindex($this->srcImage,imagecolorat ($this->srcImage , $x, $y)));
+                $array[$y][$x] = $this->isBlack(imagecolorsforindex($image,imagecolorat ($image , $x, $y)));
             }
         }
 
-        $this->array = $array;
+        if(!$returnArray)
+            $this->array = $array;
+        else
+            return $array;
     }
 
     protected function isBlack($arrayColor){
-        if($arrayColor['red'] >= 50 && $arrayColor['green'] >= 50 && $arrayColor['blue'] >= 50)
+        if($arrayColor['red'] >= 105 && $arrayColor['green'] >= 105 && $arrayColor['blue'] >= 105)
             return '0'; // white
         else
             return '1';
     }
 
-    public function printArray($memory = false){
-        $array = $this->array;
+    public function printArray($printStringNumber = false,$array = null){
+        if($array == null)
+            $array = $this->array;
         for($y = 0;$y < count($array);$y++){
+            if($printStringNumber)
+                echo $y.':  ';
             for($x = 0;$x < count($array[$y]);$x++){
                 echo $array[$y][$x];
             }
             echo '<br>';
         }
     }
-} 
+
+    public function getSymbols($w = 23,$h = 40){
+
+        $array = $this->array;
+        $symbolsCount = 0;
+
+        for($y = 0;$y < count($array);$y++){
+            for($x = 0;$x < count($array[$y]);$x++){
+                $curPos = $this->array[$y][$x];
+                if($curPos == 1){
+                    $minX = $maxX = $x;
+                    $minY = $maxY = $y;
+                    $this->burn($y,$x,$minX,$minY,$maxX,$maxY);
+
+                    if($minX == -1)
+                        continue;
+
+                    $this->symbols[$symbolsCount]['minX'] = $minX;
+                    $this->symbols[$symbolsCount]['minY'] = $minY;
+                    $this->symbols[$symbolsCount]['maxX'] = $maxX;
+                    $this->symbols[$symbolsCount]['maxY'] = $maxY;
+                    $curSymbolImage = $this->crop($minX,$minY,$w,$h,$maxX-$minX+1,$maxY-$minY+1);
+                    $this->symbols[$symbolsCount]['image'] = $curSymbolImage;
+                    $this->symbols[$symbolsCount]['array'] = $this->getArray($curSymbolImage,true);
+
+                    $symbolsCount++;
+
+                }
+            }
+        }
+
+    }
+
+    public function burn($startY,$startX,&$minX,&$minY,&$maxX,&$maxY){
+        $return = false;
+        $this->getNear($startY,$startX,$minX,$minY,$maxX,$maxY,1,$return);
+        if($return)
+            $minX = -1;
+
+        /*echo 'minX: '.$minX.'<br>';
+        echo 'minY: '.$minY.'<br>';
+        echo 'maxX: '.$maxX.'<br>';
+        echo 'maxY: '.$maxY.'<br>';
+
+        $this->printArray();
+        $this->crop($minX,$minY,23,40,$maxX-$minX+1,$maxY-$minY+1);
+        $this->save('D:\WebServer\home\loc\www\OCR\images\bibi_test\test.jpg','jpg',true);*/
+    }
+
+    public function getNear($y,$x,&$minX,&$minY,&$maxX,&$maxY,$count,&$return = false){
+        $count++;
+        if($count >800)
+            $return = true;
+
+        if($return)
+            return;
+
+        $array = $this->array;
+        $this->array[$y][$x] = 2;
+
+        // X O O
+        // O C O
+        // O O O
+        if($array[$y-1][$x-1] == 1){
+            if($x-1 < $minX)
+                $minX = $x-1;
+            if($y-1 < $minY)
+                $minY = $y-1;
+
+            $this->getNear($y-1,$x-1,$minX,$minY,$maxX,$maxY,$count,$return);
+        }
+
+        // O X O
+        // O C O
+        // O O O
+        if($array[$y-1][$x] == 1){
+            if($y-1 < $minY)
+                $minY = $y-1;
+
+            $this->getNear($y-1,$x,$minX,$minY,$maxX,$maxY,$count,$return);
+        }
+
+        // O O X
+        // O C O
+        // O O O
+        if($array[$y-1][$x+1] == 1){
+            if($x+1 > $maxX)
+                $maxX = $x+1;
+            if($y-1 < $minY)
+                $minY = $y-1;
+
+            $this->getNear($y-1,$x+1,$minX,$minY,$maxX,$maxY,$count,$return);
+        }
+
+        // O O O
+        // X C O
+        // O O O
+        if($array[$y][$x-1] == 1){
+            if($x-1 < $minX)
+                $minX = $x-1;
+
+            $this->getNear($y,$x-1,$minX,$minY,$maxX,$maxY,$count,$return);
+        }
+
+        // O O O
+        // O C X
+        // O O O
+        if($array[$y][$x+1] == 1){
+            if($x+1 > $maxX)
+                $maxX = $x+1;
+
+            $this->getNear($y,$x+1,$minX,$minY,$maxX,$maxY,$count,$return);
+        }
+
+        // O O O
+        // O C O
+        // X O O
+        if($array[$y+1][$x-1] == 1){
+            if($x-1 < $minX)
+                $minX = $x-1;
+            if($y+1 > $maxY)
+                $maxY = $y+1;
+
+            $this->getNear($y+1,$x-1,$minX,$minY,$maxX,$maxY,$count,$return);
+        }
+
+        // O O O
+        // O C O
+        // O X O
+        if($array[$y+1][$x] == 1){
+            if($y+1 > $maxY)
+                $maxY = $y+1;
+
+            $this->getNear($y+1,$x,$minX,$minY,$maxX,$maxY,$count,$return);
+        }
+
+        // O O O
+        // O C O
+        // O O X
+        if($array[$y+1][$x+1] == 1){
+            if($x+1 > $maxX)
+                $maxX = $x+1;
+            if($y+1 > $maxY)
+                $maxY = $y+1;
+
+            $this->getNear($y+1,$x+1,$minX,$minY,$maxX,$maxY,$count,$return);
+        }
+
+    }
+
+    public function sortSymbols(){
+
+        $count = count($this->symbols);
+        for($i = 0; $i < $count - 1; $i++)
+            for($j = 0; $j < $count - $i - 1; $j++)
+                if($this->symbols[$j]['minX'] < $this->symbols[$j + 1]['minX']){
+                    $temp = $this->symbols[$j];
+                    $this->symbols[$j] = $this->symbols[$j+1];
+                    $this->symbols[$j+1] = $temp;
+                }
+
+        for($i = 0; $i < $count - 1; $i++)
+            for($j = 0; $j < $count - $i - 1; $j++)
+                if($this->symbols[$j]['minY'] < $this->symbols[$j + 1]['minY']){
+                    $temp = $this->symbols[$j];
+                    $this->symbols[$j] = $this->symbols[$j+1];
+                    $this->symbols[$j+1] = $temp;
+                }
+
+    }
+}

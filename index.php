@@ -79,24 +79,89 @@ foreach($neuronsLayer as $neuron){
     }
 }
 
-//Подкинем пару файлов
-$ext = '.png';
+if(isset($_GET['learn_code'])){
+    $file = '3 0 1 4 5';
+    $image = new ImageHelper('images/bibi_code/'.$file);
+    $image->getSymbols();
+    $symbolArray = preg_split("/ /",$file,null,PREG_SPLIT_NO_EMPTY);
 
-/*$image1 = new ImageHelper($dir.'1'.$ext);
-$image5 = new ImageHelper($dir.'5'.$ext);
-$image5c = new ImageHelper($dir.'5c'.$ext);
-$image6 = new ImageHelper($dir.'6'.$ext);
-$image8 = new ImageHelper($dir.'8'.$ext);
-$image9 = new ImageHelper($dir.'9'.$ext);
-$imageArray = array($image1,$image5,$image5c,$image6,$image8,$image9);
-
-foreach($imageArray as $image){
     foreach($neuronsLayer as $neuron){
-        if($neuron->OCR($image->array))
-            echo $neuron->name;
-    }
-}*/
+        $iterCount = 1;
+        for($iter = 0;$iter < $iterCount;$iter++){
+            echo '<b>Итерация обучения нейрона '.$neuron->name.' №'.$iter.'</b><br>';
 
+            $symbolCount = 0;
+            foreach($image->symbols as $symbol){
+                $imageArray = $symbol['array'];
+                $isNeuron = $neuron->OCR($imageArray);
+
+                $curSymbol = $symbolArray[$symbolCount];
+                if($curSymbol == $neuron->name){ //цифра нужная
+                    if(!$isNeuron){
+                        $neuron->learn($imageArray,true);
+                        echo 'Символ '.$curSymbol.' не верный<br>';
+                        if($iterCount - 1 == $iter)
+                            $iterCount++;
+                    }
+                }else{
+                    if($isNeuron){
+                        $neuron->learn($imageArray,false);
+                        echo 'Символ '.$curSymbol.' не верный<br>';
+                        if($iterCount - 1 == $iter)
+                            $iterCount++;
+                    }
+                }
+
+                $symbolCount++;
+            }
+
+            $neuron->save();
+        }
+    }
+
+}
+
+if(isset($_GET['OCR_code'])){
+    $image = new ImageHelper('images/bibi_code/3 0 1 4 5');
+    $image->getSymbols();
+
+    foreach($image->symbols as $symbol){
+        foreach($neuronsLayer as $neuron){
+            $isNeuron = $neuron->OCR($symbol['array']);
+            if($isNeuron){
+                $symbolName = $neuron->name;
+                break;
+            }else
+                $symbolName = '?';
+        }
+        echo $symbolName;
+    }
+}
+
+
+$image = new ImageHelper('images/bibi_code/1.jpg',false);
+$image->resize(20);
+$image->getArray();
+//$image->printArray();
+$image->getSymbols();
+$image->sortSymbols();
+foreach($image->symbols as $symbol){
+    $image->printArray(false,$symbol['array']);
+    echo '<br><br>';
+}
+//$image->printArray();
+
+/*foreach($image->symbols as $symbol){
+    foreach($neuronsLayer as $neuron){
+        $isNeuron = $neuron->OCR($symbol['array']);
+        if($isNeuron){
+            $symbolName = $neuron->name;
+            break;
+        }else
+            $symbolName = '?';
+    }
+    echo $symbolName;
+}*/
 
 ?>
 
